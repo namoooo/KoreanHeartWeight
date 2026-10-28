@@ -68,7 +68,12 @@
   .result .val span { font-size: 1.6rem; font-weight: 600; margin-left: 4px; }
   .result .val.empty { color: var(--muted); }
   .result .hint { margin-top: 12px; font-size: .85rem; color: var(--muted); }
-  .result .sample { margin-top: 8px; font-size: .8rem; color: var(--muted); }
+  .result .sample { margin-top: 6px; font-size: .75rem; color: var(--muted); line-height: 1.4; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .model + .model { border-left: 1px solid var(--line); padding-left: 12px; }
+  .mname { font-size: .8rem; font-weight: 600; margin-bottom: 6px; }
+  .duo .val { font-size: 2.4rem; }
+  .duo .val span { font-size: 1.1rem; }
   .warn { color: #b26a00; }
   @media (prefers-color-scheme: dark) { .warn { color: #f0b45a; } }
   .refs { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); text-align: left; }
@@ -87,7 +92,7 @@
     input[type=range] { display: block; }
     .num input { text-align: center; }
     .result { position: static; padding: 24px 16px; }
-    .result .val { font-size: 3rem; }
+    .duo .val { font-size: 2.1rem; }
   }
   @media (pointer: coarse) {
     .notice { display: none; }
@@ -157,9 +162,19 @@
 
     <section class="card result" aria-live="polite">
       <div class="cap" data-i18n="resultCap"></div>
-      <div class="val empty" id="out">—</div>
+      <div class="duo">
+        <div class="model">
+          <div class="mname" data-i18n="m25Name"></div>
+          <div class="val empty" id="out25">—</div>
+          <div class="sample"><span data-i18n="m25Sample"></span> <span class="warn" id="warn25"></span></div>
+        </div>
+        <div class="model">
+          <div class="mname" data-i18n="m26Name"></div>
+          <div class="val empty" id="out26">—</div>
+          <div class="sample"><span data-i18n="m26Sample"></span> <span class="warn" id="warn26"></span></div>
+        </div>
+      </div>
       <div class="hint" id="hint"></div>
-      <div class="sample"><span data-i18n="ourSample"></span> <span class="warn" id="our-warn"></span></div>
       <div class="refs">
         <h2 data-i18n="refsTitle"></h2>
         <div class="ref">
@@ -182,6 +197,9 @@
 <script>
 (() => {
   const B0 = 2.9071, B1 = -0.0856, B2 = 0.0080, B3 = 0.0250, B4 = 0.0125, B5 = -0.0001024, UB = 0.2547;
+  // 2026 model: adults 18–39, BMI 18.5–24.9 (n=256); see model_validation.ipynb. UB = empirical 95th pct of residuals
+  const N = { b0: 3.770206319925286, female: -0.09876214551328277, age: 0.010756609017500002,
+              h: 0.0070486812478535305, w: 0.007507037149299053, ub: 0.230568 };
 
   const T = {
     ko: {
@@ -197,8 +215,9 @@
       range: (a, b) => `${a} ~ ${b} 범위로 입력하세요`,
       summary: (f, a, h, w) => `${f ? '여성' : '남성'} · ${a}세 · ${h}cm · ${w}kg`,
       dec: '감소', inc: '증가', slider: '슬라이더',
-      ourSample: '한국인 부검 562건 · 0–39세',
-      outOfAge: '(연구 연령 범위 밖)',
+      m25Name: '2025 모형', m25Sample: '한국인 부검 562건 · 0–39세 (소아·비만 포함)',
+      m26Name: '2026 모형', m26Sample: '18–39세 · BMI 18.5–24.9 성인 256건',
+      outOfAge: '(연구 연령 범위 밖)', outOfBmi: '(연구 BMI 범위 밖)',
       refsTitle: '참고 모델 (단측 95% 상한)',
       lundName: 'Lund (스웨덴)', lundSample: '외인사 부검 27,645명 · 18세 이상',
       nwName: 'Northwestern (미국)', nwSample: '정상 심장 3,398명 · 40세 미만',
@@ -217,8 +236,9 @@
       range: (a, b) => `Must be between ${a} and ${b}`,
       summary: (f, a, h, w) => `${f ? 'Female' : 'Male'} · ${a} yrs · ${h} cm · ${w} kg`,
       dec: 'decrease', inc: 'increase', slider: 'slider',
-      ourSample: '562 Korean autopsies · age 0–39',
-      outOfAge: '(outside study age range)',
+      m25Name: '2025 model', m25Sample: '562 Korean autopsies · age 0–39 (incl. children & obese, outliers kept)',
+      m26Name: '2026 model (normal BMI)', m26Sample: 'Outliers removed · 256 adults · age 18–39 · BMI 18.5–24.9',
+      outOfAge: '(outside study age range)', outOfBmi: '(outside study BMI range)',
       refsTitle: 'Reference models (one-sided 95% upper limit)',
       lundName: 'Lund (Sweden)', lundSample: '27,645 medicolegal autopsies · age ≥18',
       nwName: 'Northwestern (USA)', nwSample: '3,398 normal hearts · age <40',
@@ -265,10 +285,12 @@
     return pred + 85.26 / 1.96 * 1.645;
   }
 
-  const out = document.getElementById('out');
+  const out25 = document.getElementById('out25');
+  const out26 = document.getElementById('out26');
+  const warn25 = document.getElementById('warn25');
+  const warn26 = document.getElementById('warn26');
   const hint = document.getElementById('hint');
   const refOut = { lund: document.getElementById('ref-lund'), nw: document.getElementById('ref-nw'), chuv: document.getElementById('ref-chuv') };
-  const ourWarn = document.getElementById('our-warn');
   const nwWarn = document.getElementById('nw-warn');
   const langBtn = document.getElementById('lang');
   const fields = {};
@@ -345,23 +367,26 @@
     const age = read('age'), height = read('height'), weight = read('weight');
     const vals = [age, height, weight];
     if (!sexEl || vals.some(v => v === null || Number.isNaN(v))) {
-      out.className = 'val empty';
-      out.textContent = '—';
+      for (const el of [out25, out26]) { el.className = 'val empty'; el.textContent = '—'; }
       hint.textContent = vals.some(Number.isNaN) ? t.check : t.fill;
       for (const k in refOut) refOut[k].textContent = '—';
-      ourWarn.textContent = nwWarn.textContent = '';
+      warn25.textContent = warn26.textContent = nwWarn.textContent = '';
       return;
     }
     const female = Number(sexEl.value);
-    const logPred = B0 + B1 * female + B2 * age + B3 * weight + B4 * height + B5 * weight * height;
-    const criteria = Math.exp(logPred + UB);
-    out.className = 'val';
-    out.innerHTML = `${criteria.toFixed(1)}<span>g</span>`;
+    const v25 = Math.exp(B0 + B1 * female + B2 * age + B3 * weight + B4 * height + B5 * weight * height + UB);
+    const v26 = Math.exp(N.b0 + N.female * female + N.age * age + N.h * height + N.w * weight + N.ub);
+    out25.className = out26.className = 'val';
+    out25.innerHTML = `${v25.toFixed(1)}<span>g</span>`;
+    out26.innerHTML = `${v26.toFixed(1)}<span>g</span>`;
+    const bmi = Math.round(weight / ((height / 100) ** 2) * 10) / 10;
+    warn25.textContent = age >= 40 ? t.outOfAge : '';
+    warn26.textContent = [age >= 40 ? t.outOfAge : '', bmi < 18.5 || bmi > 24.9 ? t.outOfBmi : ''].filter(Boolean).join(' ');
     hint.textContent = t.summary(female, age, height, weight);
     refOut.lund.textContent = `${lund(female, age, height, weight).toFixed(1)} g`;
     refOut.nw.textContent = `${northwestern(female, age, height, weight).toFixed(1)} g`;
     refOut.chuv.textContent = `${chuv(female, height, weight).toFixed(1)} g`;
-    ourWarn.textContent = nwWarn.textContent = age >= 40 ? t.outOfAge : '';
+    nwWarn.textContent = age >= 40 ? t.outOfAge : '';
   }
 
   applyLang();
