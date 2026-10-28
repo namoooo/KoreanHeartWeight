@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한국인 심장무게 95% 상한 계산기</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #fff; --text: #1a1d23; --muted: #6b7280; --line: #d9dde3;
+    --accent: #1f5fbf; --accent-soft: #e8f0fc; --error: #c62828;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121417; --card: #1c1f24; --text: #e8eaed; --muted: #9aa1ab; --line: #343a42;
+      --accent: #6ea2f0; --accent-soft: #1d2a3d; --error: #ef6b6b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 24px 16px 40px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  h1 { font-size: 1.15rem; font-weight: 700; margin: 0; line-height: 1.4; }
+  .lang {
+    flex: none; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--card); color: var(--muted); font-size: .8rem; cursor: pointer;
+  }
+  .lang:hover { color: var(--text); }
+  .notice {
+    display: flex; gap: 8px; align-items: flex-start; margin: 0 0 20px; padding: 10px 12px;
+    background: var(--accent-soft); border-radius: 8px; font-size: .85rem; line-height: 1.5;
+  }
+  .notice svg { flex: none; margin-top: 2px; color: var(--accent); }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .label { display: flex; justify-content: space-between; font-size: .9rem; font-weight: 600; margin-bottom: 8px; }
+  .label small { color: var(--muted); font-weight: 400; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label { text-align: center; padding: 11px 0; cursor: pointer; font-weight: 600; user-select: none; }
+  .seg label:last-of-type { border-left: 1px solid var(--line); }
+  .seg input:checked + label { background: var(--accent); color: #fff; }
+  .seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -3px; }
+  .num { display: flex; gap: 6px; }
+  .num input {
+    flex: 1; min-width: 0; font-size: 1.05rem; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--card); color: var(--text); text-align: right;
+  }
+  .num input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+  .num input.invalid { border-color: var(--error); }
+  .unit { align-self: center; width: 28px; color: var(--muted); font-size: .9rem; }
+  .step {
+    display: none; width: 44px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); color: var(--text); font-size: 1.3rem; cursor: pointer;
+  }
+  .step:active { background: var(--accent-soft); }
+  input[type=range] { display: none; width: 100%; margin: 12px 0 0; accent-color: var(--accent); }
+  .err { color: var(--error); font-size: .8rem; margin-top: 6px; }
+  .err:empty { display: none; }
+  .result { text-align: center; padding: 32px 20px; position: sticky; top: 16px; }
+  .result .cap { font-size: .9rem; color: var(--muted); margin-bottom: 12px; }
+  .result .val { font-size: 3.4rem; font-weight: 800; letter-spacing: -.02em; color: var(--accent); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .result .val span { font-size: 1.6rem; font-weight: 600; margin-left: 4px; }
+  .result .val.empty { color: var(--muted); }
+  .result .hint { margin-top: 12px; font-size: .85rem; color: var(--muted); }
+
+  @media (max-width: 680px) {
+    main { padding-top: 16px; }
+    .layout { grid-template-columns: 1fr; }
+    .notice { display: none; }
+    .step { display: block; }
+    input[type=range] { display: block; }
+    .num input { text-align: center; }
+    .result { position: static; padding: 24px 16px; }
+    .result .val { font-size: 3rem; }
+  }
+  @media (pointer: coarse) {
+    .notice { display: none; }
+    .step { display: block; }
+    input[type=range] { display: block; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 data-i18n="title"></h1>
+    <button type="button" class="lang" id="lang"></button>
+  </header>
+  <p class="notice">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+    <span data-i18n="notice"></span>
+  </p>
+  <div class="layout">
+    <form class="card" id="form" autocomplete="off" onsubmit="return false">
+      <div class="field">
+        <div class="label"><span data-i18n="sex"></span></div>
+        <div class="seg" role="radiogroup" id="sex-group">
+          <input type="radio" name="sex" id="sex-m" value="0">
+          <label for="sex-m" data-i18n="male"></label>
+          <input type="radio" name="sex" id="sex-f" value="1">
+          <label for="sex-f" data-i18n="female"></label>
+        </div>
+      </div>
+
+      <div class="field" data-key="age">
+        <div class="label"><label for="age" data-i18n="age"></label><small>18 – 100</small></div>
+        <div class="num">
+          <button type="button" class="step" data-d="-1" tabindex="-1">−</button>
+          <input id="age" type="number" inputmode="numeric" min="18" max="100" step="1">
+          <button type="button" class="step" data-d="1" tabindex="-1">+</button>
+          <span class="unit" data-i18n="yrs"></span>
+        </div>
+        <input type="range" min="18" max="100" step="1" value="40" tabindex="-1">
+        <div class="err"></div>
+      </div>
+
+      <div class="field" data-key="height">
+        <div class="label"><label for="height" data-i18n="height"></label><small>120.0 – 210.0</small></div>
+        <div class="num">
+          <button type="button" class="step" data-d="-1" tabindex="-1">−</button>
+          <input id="height" type="number" inputmode="decimal" min="120" max="210" step="0.1">
+          <button type="button" class="step" data-d="1" tabindex="-1">+</button>
+          <span class="unit">cm</span>
+        </div>
+        <input type="range" min="120" max="210" step="0.5" value="165" tabindex="-1">
+        <div class="err"></div>
+      </div>
+
+      <div class="field" data-key="weight">
+        <div class="label"><label for="weight" data-i18n="weight"></label><small>30.0 – 200.0</small></div>
+        <div class="num">
+          <button type="button" class="step" data-d="-1" tabindex="-1">−</button>
+          <input id="weight" type="number" inputmode="decimal" min="30" max="200" step="0.1">
+          <button type="button" class="step" data-d="1" tabindex="-1">+</button>
+          <span class="unit">kg</span>
+        </div>
+        <input type="range" min="30" max="200" step="0.5" value="65" tabindex="-1">
+        <div class="err"></div>
+      </div>
+    </form>
+
+    <section class="card result" aria-live="polite">
+      <div class="cap" data-i18n="resultCap"></div>
+      <div class="val empty" id="out">—</div>
+      <div class="hint" id="hint"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const B0 = 2.9071, B1 = -0.0856, B2 = 0.0080, B3 = 0.0250, B4 = 0.0125, B5 = -0.0001, UB = 0.2547;
+
+  const T = {
+    ko: {
+      docTitle: '한국인 심장무게 95% 상한 계산기',
+      title: '한국인 심장무게 95% 상한(심비대 기준) 계산기',
+      notice: '모바일에서도 터치 버튼과 슬라이더로 쉽게 입력할 수 있는 접근성 높은 화면을 제공합니다.',
+      switchTo: 'English',
+      sex: '성별', male: '남성', female: '여성',
+      age: '나이', height: '키', weight: '몸무게', yrs: '세',
+      resultCap: '심장무게 95% 상한치',
+      fill: '모든 항목을 입력하세요', check: '입력값을 확인하세요',
+      nan: '숫자를 입력하세요', int: '정수로 입력하세요',
+      range: (a, b) => `${a} ~ ${b} 범위로 입력하세요`,
+      summary: (f, a, h, w) => `${f ? '여성' : '남성'} · ${a}세 · ${h}cm · ${w}kg`,
+      dec: '감소', inc: '증가', slider: '슬라이더',
+    },
+    en: {
+      docTitle: 'Korean Heart Weight 95% Upper Limit Calculator',
+      title: 'Korean Heart Weight 95% Upper Limit (Cardiomegaly Criterion) Calculator',
+      notice: 'An accessible mobile layout with touch-friendly buttons and sliders is also available.',
+      switchTo: '한국어',
+      sex: 'Sex', male: 'Male', female: 'Female',
+      age: 'Age', height: 'Height', weight: 'Weight', yrs: 'yrs',
+      resultCap: '95% Upper Limit of Heart Weight',
+      fill: 'Please fill in all fields', check: 'Please check your input',
+      nan: 'Enter a number', int: 'Enter a whole number',
+      range: (a, b) => `Must be between ${a} and ${b}`,
+      summary: (f, a, h, w) => `${f ? 'Female' : 'Male'} · ${a} yrs · ${h} cm · ${w} kg`,
+      dec: 'decrease', inc: 'increase', slider: 'slider',
+    },
+  };
+
+  function initialLang() {
+    try {
+      const saved = localStorage.getItem('lang');
+      if (saved === 'ko' || saved === 'en') return saved;
+    } catch (e) {}
+    const langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
+    return String(langs[0]).toLowerCase().startsWith('ko') ? 'ko' : 'en';
+  }
+  let lang = initialLang();
+
+  const spec = {
+    age:    { min: 18,  max: 100, int: true },
+    height: { min: 120, max: 210, int: false },
+    weight: { min: 30,  max: 200, int: false },
+  };
+  const out = document.getElementById('out');
+  const hint = document.getElementById('hint');
+  const langBtn = document.getElementById('lang');
+  const fields = {};
+
+  function applyLang() {
+    const t = T[lang];
+    document.documentElement.lang = lang;
+    document.title = t.docTitle;
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t[el.dataset.i18n]; });
+    document.getElementById('sex-group').setAttribute('aria-label', t.sex);
+    langBtn.textContent = t.switchTo;
+    for (const key in fields) {
+      const f = fields[key], name = t[key];
+      f.input.placeholder = key === 'age' ? t.yrs : (key === 'height' ? 'cm' : 'kg');
+      f.dec.setAttribute('aria-label', `${name} ${t.dec}`);
+      f.inc.setAttribute('aria-label', `${name} ${t.inc}`);
+      f.range.setAttribute('aria-label', `${name} ${t.slider}`);
+    }
+    update();
+  }
+
+  document.querySelectorAll('.field[data-key]').forEach(el => {
+    const key = el.dataset.key;
+    const input = el.querySelector('input[type=number]');
+    const range = el.querySelector('input[type=range]');
+    const [dec, inc] = el.querySelectorAll('.step');
+    const err = el.querySelector('.err');
+    fields[key] = { input, range, err, dec, inc };
+
+    input.addEventListener('input', () => {
+      const v = parseFloat(input.value);
+      if (!isNaN(v)) range.value = v;
+      update();
+    });
+    range.addEventListener('input', () => {
+      input.value = spec[key].int ? range.value : Number(range.value).toFixed(1);
+      update();
+    });
+    [dec, inc].forEach(btn => btn.addEventListener('click', () => {
+      const s = spec[key];
+      const cur = parseFloat(input.value);
+      let v = isNaN(cur) ? Number(range.value) : cur + Number(btn.dataset.d);
+      v = Math.min(s.max, Math.max(s.min, v));
+      input.value = s.int ? Math.round(v) : v.toFixed(1);
+      range.value = v;
+      update();
+    }));
+  });
+  document.querySelectorAll('input[name=sex]').forEach(r => r.addEventListener('change', update));
+
+  langBtn.addEventListener('click', () => {
+    lang = lang === 'ko' ? 'en' : 'ko';
+    try { localStorage.setItem('lang', lang); } catch (e) {}
+    applyLang();
+  });
+
+  function read(key) {
+    const t = T[lang], s = spec[key], f = fields[key], raw = f.input.value.trim();
+    f.err.textContent = '';
+    f.input.classList.remove('invalid');
+    if (raw === '') return null;
+    const v = Number(raw);
+    let msg = '';
+    if (!isFinite(v)) msg = t.nan;
+    else if (s.int && !Number.isInteger(v)) msg = t.int;
+    else if (v < s.min || v > s.max) msg = t.range(s.min, s.max);
+    if (msg) { f.err.textContent = msg; f.input.classList.add('invalid'); return NaN; }
+    return v;
+  }
+
+  function update() {
+    const t = T[lang];
+    const sexEl = document.querySelector('input[name=sex]:checked');
+    const age = read('age'), height = read('height'), weight = read('weight');
+    const vals = [age, height, weight];
+    if (!sexEl || vals.some(v => v === null || Number.isNaN(v))) {
+      out.className = 'val empty';
+      out.textContent = '—';
+      hint.textContent = vals.some(Number.isNaN) ? t.check : t.fill;
+      return;
+    }
+    const female = Number(sexEl.value);
+    const logPred = B0 + B1 * female + B2 * age + B3 * weight + B4 * height + B5 * weight * height;
+    const criteria = Math.exp(logPred + UB);
+    out.className = 'val';
+    out.innerHTML = `${criteria.toFixed(1)}<span>g</span>`;
+    hint.textContent = t.summary(female, age, height, weight);
+  }
+
+  applyLang();
+})();
+</script>
+</body>
+</html>
