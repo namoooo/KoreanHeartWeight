@@ -68,6 +68,16 @@
   .result .val span { font-size: 1.6rem; font-weight: 600; margin-left: 4px; }
   .result .val.empty { color: var(--muted); }
   .result .hint { margin-top: 12px; font-size: .85rem; color: var(--muted); }
+  .result .sample { margin-top: 8px; font-size: .8rem; color: var(--muted); }
+  .warn { color: #b26a00; }
+  @media (prefers-color-scheme: dark) { .warn { color: #f0b45a; } }
+  .refs { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); text-align: left; }
+  .refs h2 { font-size: .8rem; font-weight: 600; color: var(--muted); margin: 0 0 10px; }
+  .ref { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; }
+  .ref a { color: var(--text); font-size: .9rem; font-weight: 600; text-decoration: none; }
+  .ref a:hover { text-decoration: underline; }
+  .ref small { display: block; color: var(--muted); font-size: .75rem; margin-top: 2px; }
+  .ref .rv { flex: none; font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
   @media (max-width: 680px) {
     main { padding-top: 16px; }
@@ -149,13 +159,29 @@
       <div class="cap" data-i18n="resultCap"></div>
       <div class="val empty" id="out">—</div>
       <div class="hint" id="hint"></div>
+      <div class="sample"><span data-i18n="ourSample"></span> <span class="warn" id="our-warn"></span></div>
+      <div class="refs">
+        <h2 data-i18n="refsTitle"></h2>
+        <div class="ref">
+          <div><a href="http://lundforensicmedicine.com/" target="_blank" rel="noopener" data-i18n="lundName"></a><small data-i18n="lundSample"></small></div>
+          <span class="rv" id="ref-lund">—</span>
+        </div>
+        <div class="ref">
+          <div><a href="https://labs.feinberg.northwestern.edu/webster/heart_weight/" target="_blank" rel="noopener" data-i18n="nwName"></a><small><span data-i18n="nwSample"></span> <span class="warn" id="nw-warn"></span></small></div>
+          <span class="rv" id="ref-nw">—</span>
+        </div>
+        <div class="ref">
+          <div><a href="https://calc.chuv.ch/heartweight" target="_blank" rel="noopener" data-i18n="chuvName"></a><small data-i18n="chuvSample"></small></div>
+          <span class="rv" id="ref-chuv">—</span>
+        </div>
+      </div>
     </section>
   </div>
 </main>
 
 <script>
 (() => {
-  const B0 = 2.9071, B1 = -0.0856, B2 = 0.0080, B3 = 0.0250, B4 = 0.0125, B5 = -0.0001, UB = 0.2547;
+  const B0 = 2.9071, B1 = -0.0856, B2 = 0.0080, B3 = 0.0250, B4 = 0.0125, B5 = -0.0001024, UB = 0.2547;
 
   const T = {
     ko: {
@@ -171,6 +197,12 @@
       range: (a, b) => `${a} ~ ${b} 범위로 입력하세요`,
       summary: (f, a, h, w) => `${f ? '여성' : '남성'} · ${a}세 · ${h}cm · ${w}kg`,
       dec: '감소', inc: '증가', slider: '슬라이더',
+      ourSample: '한국인 부검 562건 · 0–39세',
+      outOfAge: '(연구 연령 범위 밖)',
+      refsTitle: '참고 모델 (단측 95% 상한)',
+      lundName: 'Lund (스웨덴)', lundSample: '외인사 부검 27,645명 · 18세 이상',
+      nwName: 'Northwestern (미국)', nwSample: '정상 심장 3,398명 · 40세 미만',
+      chuvName: 'CHUV (스위스)', chuvSample: '정상 심장 288명 · 18–88세 · 나이 미반영',
     },
     en: {
       docTitle: 'Korean Heart Weight 95% Upper Limit Calculator',
@@ -185,6 +217,12 @@
       range: (a, b) => `Must be between ${a} and ${b}`,
       summary: (f, a, h, w) => `${f ? 'Female' : 'Male'} · ${a} yrs · ${h} cm · ${w} kg`,
       dec: 'decrease', inc: 'increase', slider: 'slider',
+      ourSample: '562 Korean autopsies · age 0–39',
+      outOfAge: '(outside study age range)',
+      refsTitle: 'Reference models (one-sided 95% upper limit)',
+      lundName: 'Lund (Sweden)', lundSample: '27,645 medicolegal autopsies · age ≥18',
+      nwName: 'Northwestern (USA)', nwSample: '3,398 normal hearts · age <40',
+      chuvName: 'CHUV (Switzerland)', chuvSample: '288 normal hearts · age 18–88 · age not used',
     },
   };
 
@@ -203,8 +241,35 @@
     height: { min: 120, max: 210, int: false },
     weight: { min: 30,  max: 200, int: false },
   };
+  // Lund: Wingren & Ottosson 2015, as implemented on lundforensicmedicine.com
+  function lund(female, age, hcm, w) {
+    const h = hcm / 100, g = female ? 1 : 2;
+    const bmi = Number((w / (h * h)).toFixed(1));
+    if (bmi < 18.5) return Math.pow(10, 2.01 + 0.0023 * age + 0.044 * g + 0.0056 * w + 0.067 * 1.65);
+    if (bmi >= 30) return Math.pow(10, 1.95 + 0.003 * age + 0.059 * g + 0.0021 * w + 0.14 * h + 0.070 * 1.65);
+    // the site uses SD 0.067 (not the paper's 0.063) for this stratum; matches the paper's worked example
+    return Math.pow(10, 1.71 + 0.0024 * age + 0.052 * g + 0.0067 * w + 0.23 * h - 0.0019 * h * w + 0.067 * 1.65);
+  }
+  // Northwestern: Schoppen et al. 2020, Table S2 coefficients as used by the site
+  function northwestern(female, age, hcm, w) {
+    const H = hcm / 100 - 1.7200121, W = w - 83.4769159;
+    return Math.exp(5.7346 - 0.1152 * female + 0.006504 * age + 0.2046 * H + 0.007504 * W
+      - 5e-5 * W * W - 0.00296 * W * H + 92e-6 * H * W * W + 0.2486252);
+  }
+  // CHUV: Vanhaebost et al. 2014 Table 4; site's two-sided ±85.26 g converted to one-sided 95%
+  function chuv(female, hcm, w) {
+    const g = w * 1000;
+    const bsa = 0.0003207 * Math.pow(hcm, 0.3) * Math.pow(g, 0.7285 - 0.0188 * Math.log10(g));
+    const b = Math.min(Math.round(bsa / 0.05) * 0.05, 2.5);
+    const pred = 250.00 + 171.11 * (b - 1.30) - (female ? 34.48 : 0);
+    return pred + 85.26 / 1.96 * 1.645;
+  }
+
   const out = document.getElementById('out');
   const hint = document.getElementById('hint');
+  const refOut = { lund: document.getElementById('ref-lund'), nw: document.getElementById('ref-nw'), chuv: document.getElementById('ref-chuv') };
+  const ourWarn = document.getElementById('our-warn');
+  const nwWarn = document.getElementById('nw-warn');
   const langBtn = document.getElementById('lang');
   const fields = {};
 
@@ -283,6 +348,8 @@
       out.className = 'val empty';
       out.textContent = '—';
       hint.textContent = vals.some(Number.isNaN) ? t.check : t.fill;
+      for (const k in refOut) refOut[k].textContent = '—';
+      ourWarn.textContent = nwWarn.textContent = '';
       return;
     }
     const female = Number(sexEl.value);
@@ -291,6 +358,10 @@
     out.className = 'val';
     out.innerHTML = `${criteria.toFixed(1)}<span>g</span>`;
     hint.textContent = t.summary(female, age, height, weight);
+    refOut.lund.textContent = `${lund(female, age, height, weight).toFixed(1)} g`;
+    refOut.nw.textContent = `${northwestern(female, age, height, weight).toFixed(1)} g`;
+    refOut.chuv.textContent = `${chuv(female, height, weight).toFixed(1)} g`;
+    ourWarn.textContent = nwWarn.textContent = age >= 40 ? t.outOfAge : '';
   }
 
   applyLang();
