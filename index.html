@@ -76,6 +76,9 @@
   .duo .val span { font-size: 1.1rem; }
   .warn { color: #b26a00; }
   @media (prefers-color-scheme: dark) { .warn { color: #f0b45a; } }
+  .stats { margin-top: 24px; text-align: right; line-height: 0; }
+  .stats img { height: 14px; opacity: .35; transition: opacity .2s; }
+  .stats img:hover { opacity: 1; }
   .refs { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); text-align: left; }
   .refs h2 { font-size: .8rem; font-weight: 600; color: var(--muted); margin: 0 0 10px; }
   .ref { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; }
@@ -192,6 +195,7 @@
       </div>
     </section>
   </div>
+  <footer class="stats" id="stats"></footer>
 </main>
 
 <script>
@@ -215,7 +219,7 @@
       range: (a, b) => `${a} ~ ${b} 범위로 입력하세요`,
       summary: (f, a, h, w) => `${f ? '여성' : '남성'} · ${a}세 · ${h}cm · ${w}kg`,
       dec: '감소', inc: '증가', slider: '슬라이더',
-      m25Name: '2025 모형', m25Sample: '한국인 부검 562건 · 0–39세 (소아·비만 포함)',
+      m25Name: '2025 모형', m25Sample: '한국인 외인사 등 562건 · 0–39세',
       m26Name: '2026 모형', m26Sample: '18–39세 · BMI 18.5–24.9 성인 256건',
       outOfAge: '(연구 연령 범위 밖)', outOfBmi: '(연구 BMI 범위 밖)',
       refsTitle: '참고 모델 (단측 95% 상한)',
@@ -236,7 +240,7 @@
       range: (a, b) => `Must be between ${a} and ${b}`,
       summary: (f, a, h, w) => `${f ? 'Female' : 'Male'} · ${a} yrs · ${h} cm · ${w} kg`,
       dec: 'decrease', inc: 'increase', slider: 'slider',
-      m25Name: '2025 model', m25Sample: '562 Korean autopsies · age 0–39 (incl. children & obese)',
+      m25Name: '2025 model', m25Sample: '562 Korean cases (unnatural deaths, etc.) · age 0–39',
       m26Name: '2026 model', m26Sample: '256 adults · age 18–39 · BMI 18.5–24.9',
       outOfAge: '(outside study age range)', outOfBmi: '(outside study BMI range)',
       refsTitle: 'Reference models (one-sided 95% upper limit)',
@@ -391,6 +395,16 @@
 
   applyLang();
 })();
+</script>
+<script>
+  // Visitor counter (hits.sh): production host only, so local and preview views aren't counted. Sends no calculator input.
+  if (location.hostname === 'koreanheartweight.vercel.app') {
+    const img = new Image();
+    img.src = 'https://hits.sh/koreanheartweight.vercel.app.svg?label=visits';
+    img.alt = 'visits';
+    img.referrerPolicy = 'no-referrer';
+    document.getElementById('stats').appendChild(img);
+  }
 </script>
 </body>
 </html>
