@@ -221,7 +221,7 @@
       dec: '감소', inc: '증가', slider: '슬라이더',
       m25Name: '2025 모델', m25Sample: '한국인 외인사 등 562건 · 0–39세',
       m26Name: '2026 모델', m26Sample: '18–39세 · BMI 18.5–24.9 성인 256건',
-      outOfAge: '(연구 연령 범위 밖)', outOfBmi: '(연구 BMI 범위 밖)',
+      outOfAge: '(연구 연령 범위 밖)', outOfBmi: '(연구 BMI 범위 밖)', outOfBody: '(연구 체격 범위 밖)',
       refsTitle: '참고 모델 (단측 95% 상한)',
       lundName: '스웨덴 (Wingren 등)', lundSample: '외인사 부검 27,645명 · 18세 이상',
       nwName: '미국 (Schoppen 등)', nwSample: '정상 심장 3,398명 · 40세 미만',
@@ -242,7 +242,7 @@
       dec: 'decrease', inc: 'increase', slider: 'slider',
       m25Name: '2025 model', m25Sample: '562 Korean cases (unnatural deaths, etc.) · age 0–39',
       m26Name: '2026 model', m26Sample: '256 adults · age 18–39 · BMI 18.5–24.9',
-      outOfAge: '(outside study age range)', outOfBmi: '(outside study BMI range)',
+      outOfAge: '(outside study age range)', outOfBmi: '(outside study BMI range)', outOfBody: '(outside study body size range)',
       refsTitle: 'Reference models (one-sided 95% upper limit)',
       lundName: 'Sweden (Wingren et al.)', lundSample: '27,645 medicolegal autopsies · age ≥18',
       nwName: 'USA (Schoppen et al.)', nwSample: '3,398 normal hearts · age <40',
@@ -388,14 +388,16 @@
     out25.innerHTML = `${gram(v25)}<span>g</span>`;
     out26.innerHTML = `${gram(v26)}<span>g</span>`;
     const bmi = Math.round(weight / ((height / 100) ** 2) * 10) / 10;
-    // study sample ranges: 2025 age 0–39; 2026 age 18–39, BMI 18.5–24.9; Lund ≥18; Northwestern <40; CHUV 18–88
+    // study sample ranges: 2025 age 0–39; 2026 age 18–39, BMI 18.5–24.9; Lund ≥18 + body size; Northwestern <40; CHUV 18–88
     warn25.textContent = age >= 40 ? t.outOfAge : '';
     warn26.textContent = [age < 18 || age >= 40 ? t.outOfAge : '', bmi < 18.5 || bmi > 24.9 ? t.outOfBmi : ''].filter(Boolean).join(' ');
     hint.textContent = t.summary(female, age, height, weight);
     refOut.lund.textContent = `${gram(lund(female, age, height, weight))} g`;
     refOut.nw.textContent = `${gram(northwestern(female, age, height, weight))} g`;
     refOut.chuv.textContent = `${gram(chuv(female, height, weight))} g`;
-    lundWarn.textContent = age < 18 ? t.outOfAge : '';
+    // Lund inclusion (Fig. 1): weight >20 and <250 kg, height >120 and <250 cm
+    lundWarn.textContent = [age < 18 ? t.outOfAge : '',
+      weight <= 20 || weight >= 250 || height <= 120 || height >= 250 ? t.outOfBody : ''].filter(Boolean).join(' ');
     nwWarn.textContent = age >= 40 ? t.outOfAge : '';
     chuvWarn.textContent = age < 18 || age > 88 ? t.outOfAge : '';
   }
