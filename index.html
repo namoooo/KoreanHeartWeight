@@ -74,7 +74,7 @@
   .mname { font-size: .8rem; font-weight: 600; margin-bottom: 6px; }
   .duo .val { font-size: 2.4rem; }
   .duo .val span { font-size: 1.1rem; }
-  .warn { color: #b26a00; }
+  .warn { color: #b26a00; font-weight: 700; }
   @media (prefers-color-scheme: dark) { .warn { color: #f0b45a; } }
   .stats { margin-top: 24px; text-align: right; line-height: 0; }
   .stats img { height: 14px; opacity: .35; transition: opacity .2s; }
@@ -127,38 +127,38 @@
       </div>
 
       <div class="field" data-key="age">
-        <div class="label"><label for="age" data-i18n="age"></label><small>18 – 100</small></div>
+        <div class="label"><label for="age" data-i18n="age"></label></div>
         <div class="num">
           <button type="button" class="step" data-d="-1" tabindex="-1">−</button>
-          <input id="age" type="number" inputmode="numeric" min="18" max="100" step="1">
+          <input id="age" type="number" inputmode="numeric" min="0" step="1">
           <button type="button" class="step" data-d="1" tabindex="-1">+</button>
           <span class="unit" data-i18n="yrs"></span>
         </div>
-        <input type="range" min="18" max="100" step="1" value="40" tabindex="-1">
+        <input type="range" min="0" max="100" step="1" value="40" tabindex="-1">
         <div class="err"></div>
       </div>
 
       <div class="field" data-key="height">
-        <div class="label"><label for="height" data-i18n="height"></label><small>120.0 – 210.0</small></div>
+        <div class="label"><label for="height" data-i18n="height"></label></div>
         <div class="num">
           <button type="button" class="step" data-d="-1" tabindex="-1">−</button>
-          <input id="height" type="number" inputmode="decimal" min="120" max="210" step="0.1">
+          <input id="height" type="number" inputmode="decimal" min="0" step="0.1">
           <button type="button" class="step" data-d="1" tabindex="-1">+</button>
           <span class="unit">cm</span>
         </div>
-        <input type="range" min="120" max="210" step="0.5" value="165" tabindex="-1">
+        <input type="range" min="40" max="210" step="0.5" value="165" tabindex="-1">
         <div class="err"></div>
       </div>
 
       <div class="field" data-key="weight">
-        <div class="label"><label for="weight" data-i18n="weight"></label><small>30.0 – 200.0</small></div>
+        <div class="label"><label for="weight" data-i18n="weight"></label></div>
         <div class="num">
           <button type="button" class="step" data-d="-1" tabindex="-1">−</button>
-          <input id="weight" type="number" inputmode="decimal" min="30" max="200" step="0.1">
+          <input id="weight" type="number" inputmode="decimal" min="0" step="0.1">
           <button type="button" class="step" data-d="1" tabindex="-1">+</button>
           <span class="unit">kg</span>
         </div>
-        <input type="range" min="30" max="200" step="0.5" value="65" tabindex="-1">
+        <input type="range" min="2" max="200" step="0.5" value="65" tabindex="-1">
         <div class="err"></div>
       </div>
     </form>
@@ -181,7 +181,7 @@
       <div class="refs">
         <h2 data-i18n="refsTitle"></h2>
         <div class="ref">
-          <div><a href="http://lundforensicmedicine.com/" target="_blank" rel="noopener" data-i18n="lundName"></a><small data-i18n="lundSample"></small></div>
+          <div><a href="http://lundforensicmedicine.com/" target="_blank" rel="noopener" data-i18n="lundName"></a><small><span data-i18n="lundSample"></span> <span class="warn" id="lund-warn"></span></small></div>
           <span class="rv" id="ref-lund">—</span>
         </div>
         <div class="ref">
@@ -189,7 +189,7 @@
           <span class="rv" id="ref-nw">—</span>
         </div>
         <div class="ref">
-          <div><a href="https://calc.chuv.ch/heartweight" target="_blank" rel="noopener" data-i18n="chuvName"></a><small data-i18n="chuvSample"></small></div>
+          <div><a href="https://calc.chuv.ch/heartweight" target="_blank" rel="noopener" data-i18n="chuvName"></a><small><span data-i18n="chuvSample"></span> <span class="warn" id="chuv-warn"></span></small></div>
           <span class="rv" id="ref-chuv">—</span>
         </div>
       </div>
@@ -216,7 +216,7 @@
       resultCap: '심장무게 95% 상한치',
       fill: '모든 항목을 입력하세요', check: '입력값을 확인하세요',
       nan: '숫자를 입력하세요', int: '정수로 입력하세요',
-      range: (a, b) => `${a} ~ ${b} 범위로 입력하세요`,
+      nonneg: '0 이상으로 입력하세요', pos: '0보다 큰 값을 입력하세요',
       summary: (f, a, h, w) => `${f ? '여성' : '남성'} · ${a}세 · ${h}cm · ${w}kg`,
       dec: '감소', inc: '증가', slider: '슬라이더',
       m25Name: '2025 모델', m25Sample: '한국인 외인사 등 562건 · 0–39세',
@@ -237,7 +237,7 @@
       resultCap: '95% Upper Limit of Heart Weight',
       fill: 'Please fill in all fields', check: 'Please check your input',
       nan: 'Enter a number', int: 'Enter a whole number',
-      range: (a, b) => `Must be between ${a} and ${b}`,
+      nonneg: 'Must be 0 or more', pos: 'Must be greater than 0',
       summary: (f, a, h, w) => `${f ? 'Female' : 'Male'} · ${a} yrs · ${h} cm · ${w} kg`,
       dec: 'decrease', inc: 'increase', slider: 'slider',
       m25Name: '2025 model', m25Sample: '562 Korean cases (unnatural deaths, etc.) · age 0–39',
@@ -261,9 +261,10 @@
   let lang = initialLang();
 
   const spec = {
-    age:    { min: 18,  max: 100, int: true },
-    height: { min: 120, max: 210, int: false },
-    weight: { min: 30,  max: 200, int: false },
+    // no upper limits; each model flags inputs outside its study sample instead
+    age:    { int: true,  pos: false },
+    height: { int: false, pos: true },
+    weight: { int: false, pos: true },
   };
   // Lund: Wingren & Ottosson 2015, as implemented on lundforensicmedicine.com
   function lund(female, age, hcm, w) {
@@ -296,6 +297,9 @@
   const hint = document.getElementById('hint');
   const refOut = { lund: document.getElementById('ref-lund'), nw: document.getElementById('ref-nw'), chuv: document.getElementById('ref-chuv') };
   const nwWarn = document.getElementById('nw-warn');
+  const lundWarn = document.getElementById('lund-warn');
+  const chuvWarn = document.getElementById('chuv-warn');
+  const gram = v => isFinite(v) ? v.toFixed(1) : '—';
   const langBtn = document.getElementById('lang');
   const fields = {};
 
@@ -337,7 +341,7 @@
       const s = spec[key];
       const cur = parseFloat(input.value);
       let v = isNaN(cur) ? Number(range.value) : cur + Number(btn.dataset.d);
-      v = Math.min(s.max, Math.max(s.min, v));
+      v = Math.max(Number(range.min), v);
       input.value = s.int ? Math.round(v) : v.toFixed(1);
       range.value = v;
       update();
@@ -360,7 +364,7 @@
     let msg = '';
     if (!isFinite(v)) msg = t.nan;
     else if (s.int && !Number.isInteger(v)) msg = t.int;
-    else if (v < s.min || v > s.max) msg = t.range(s.min, s.max);
+    else if (s.pos ? v <= 0 : v < 0) msg = s.pos ? t.pos : t.nonneg;
     if (msg) { f.err.textContent = msg; f.input.classList.add('invalid'); return NaN; }
     return v;
   }
@@ -374,23 +378,26 @@
       for (const el of [out25, out26]) { el.className = 'val empty'; el.textContent = '—'; }
       hint.textContent = vals.some(Number.isNaN) ? t.check : t.fill;
       for (const k in refOut) refOut[k].textContent = '—';
-      warn25.textContent = warn26.textContent = nwWarn.textContent = '';
+      for (const el of [warn25, warn26, nwWarn, lundWarn, chuvWarn]) el.textContent = '';
       return;
     }
     const female = Number(sexEl.value);
     const v25 = Math.exp(B0 + B1 * female + B2 * age + B3 * weight + B4 * height + B5 * weight * height + UB);
     const v26 = Math.exp(N.b0 + N.female * female + N.age * age + N.h * height + N.w * weight + N.ub);
     out25.className = out26.className = 'val';
-    out25.innerHTML = `${v25.toFixed(1)}<span>g</span>`;
-    out26.innerHTML = `${v26.toFixed(1)}<span>g</span>`;
+    out25.innerHTML = `${gram(v25)}<span>g</span>`;
+    out26.innerHTML = `${gram(v26)}<span>g</span>`;
     const bmi = Math.round(weight / ((height / 100) ** 2) * 10) / 10;
+    // study sample ranges: 2025 age 0–39; 2026 age 18–39, BMI 18.5–24.9; Lund ≥18; Northwestern <40; CHUV 18–88
     warn25.textContent = age >= 40 ? t.outOfAge : '';
-    warn26.textContent = [age >= 40 ? t.outOfAge : '', bmi < 18.5 || bmi > 24.9 ? t.outOfBmi : ''].filter(Boolean).join(' ');
+    warn26.textContent = [age < 18 || age >= 40 ? t.outOfAge : '', bmi < 18.5 || bmi > 24.9 ? t.outOfBmi : ''].filter(Boolean).join(' ');
     hint.textContent = t.summary(female, age, height, weight);
-    refOut.lund.textContent = `${lund(female, age, height, weight).toFixed(1)} g`;
-    refOut.nw.textContent = `${northwestern(female, age, height, weight).toFixed(1)} g`;
-    refOut.chuv.textContent = `${chuv(female, height, weight).toFixed(1)} g`;
+    refOut.lund.textContent = `${gram(lund(female, age, height, weight))} g`;
+    refOut.nw.textContent = `${gram(northwestern(female, age, height, weight))} g`;
+    refOut.chuv.textContent = `${gram(chuv(female, height, weight))} g`;
+    lundWarn.textContent = age < 18 ? t.outOfAge : '';
     nwWarn.textContent = age >= 40 ? t.outOfAge : '';
+    chuvWarn.textContent = age < 18 || age > 88 ? t.outOfAge : '';
   }
 
   applyLang();
