@@ -77,7 +77,8 @@
   .warn { color: #b26a00; font-weight: 700; }
   @media (prefers-color-scheme: dark) { .warn { color: #f0b45a; } }
   .stats { margin-top: 24px; text-align: right; line-height: 0; }
-  .stats img { height: 14px; opacity: .35; transition: opacity .2s; }
+  .stats img { height: 14px; opacity: .35; transition: opacity .2s; vertical-align: middle; }
+  .ver { font-size: .7rem; line-height: 14px; color: var(--muted); opacity: .5; vertical-align: middle; margin-right: 8px; }
   .stats img:hover { opacity: 1; }
   .refs { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); text-align: left; }
   .refs h2 { font-size: .8rem; font-weight: 600; color: var(--muted); margin: 0 0 10px; }
@@ -195,7 +196,7 @@
       </div>
     </section>
   </div>
-  <footer class="stats" id="stats"></footer>
+  <footer class="stats" id="stats"><span class="ver" id="ver">v2026.11.21</span></footer>
 </main>
 
 <script>
